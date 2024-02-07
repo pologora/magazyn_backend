@@ -7,7 +7,7 @@ const validateRequiredFields = require('../utils/validateRequiredFields');
 const workTimeCollection = client.db('magazyn').collection('Workdays');
 const employeeCollection = client.db('magazyn').collection('Employee');
 
-exports.getAllWorktime = catchAsync(async (req, res, next) => {
+exports.getAllWorkTime = catchAsync(async (req, res, next) => {
   validateRequiredFields(req.query, ['id']);
   const { id, startDate, endDate } = req.query;
   const employeeId = new ObjectId(id);
