@@ -5,7 +5,7 @@ const {
   getUser,
   updateUser,
   deleteUser,
-} = require('../controllers/userController');
+} = require('../controllers/usersController');
 const { signup, login } = require('../controllers/authController');
 const authProtect = require('../middlewares/authProtect');
 

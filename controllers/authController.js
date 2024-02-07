@@ -1,5 +1,5 @@
 const catchAsync = require('../utils/catchAsync');
-const { createUser } = require('./userController');
+const { createUser } = require('./usersController');
 const { client } = require('../config/db');
 const validateRequiredFields = require('../utils/validateRequiredFields');
 const compareSubmittedPassword = require('../utils/compareSubmittedPassword');

@@ -8,9 +8,46 @@ const AppError = require('../utils/appError');
 const employeeCollection = client.db('magazyn').collection('Employee');
 
 exports.getAllEmployees = catchAsync(async (req, res, next) => {
-  const query = {};
-  const options = { };
-  const employees = await employeeCollection.find(query, options).toArray();
+  const { isWorking } = req.query;
+  let employees;
+
+  if (isWorking) {
+    const queryObj = { isWorking: true };
+    employees = await employeeCollection
+      .aggregate([
+        {
+          $match: queryObj,
+        },
+        {
+          $lookup: {
+            from: 'Workdays',
+            localField: '_id',
+            foreignField: 'employeeId',
+            as: 'workdays',
+          },
+        },
+        {
+          $unwind: '$workdays',
+        },
+        {
+          $match: { 'workdays.endWork': null },
+        },
+        {
+          $group: {
+            _id: '$_id',
+            name: { $first: '$name' },
+            surname: { $first: '$surname' },
+            startWork: { $max: '$workdays.startWork' },
+          },
+        },
+        {
+          $sort: { startWork: 1 },
+        },
+      ])
+      .toArray();
+  } else {
+    employees = await employeeCollection.find({}).toArray();
+  }
 
   res.status(200).json({
     status: 'success',
