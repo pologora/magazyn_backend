@@ -8,7 +8,7 @@ const workTimeCollection = client.db('magazyn').collection('Workdays');
 const employeeCollection = client.db('magazyn').collection('Employee');
 
 exports.getAllWorktime = catchAsync(async (req, res, next) => {
-  validateRequiredFields(req.query, ['id', 'startDate', 'endDate']);
+  validateRequiredFields(req.query, ['id']);
   const { id, startDate, endDate } = req.query;
   const employeeId = new ObjectId(id);
 
@@ -17,19 +17,19 @@ exports.getAllWorktime = catchAsync(async (req, res, next) => {
 
   let start = new Date();
   start.setDate(1);
-  start.setHours(0, 0, 0, 0);
+  start.setUTCHours(0, 0, 0, 0);
 
   let end = new Date();
-  end.setHours(23, 59, 59, 999);
+  end.setUTCHours(23, 59, 59, 999);
 
   if (startDate) {
     start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+    start.setUTCHours(0, 0, 0, 0);
   }
 
   if (endDate) {
     end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setUTCHours(23, 59, 59, 999);
   }
 
   const workdays = await workTimeCollection.find({
