@@ -4,13 +4,19 @@ const catchAsync = require('../utils/catchAsync');
 const checkResult = require('../utils/checkResult');
 const validateRequiredFields = require('../utils/validateRequiredFields');
 
-const vacationsCollection = client.db('magazyn').collection('Vacations');
+const vacationsProposalsStatusTypes = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+};
 
-exports.getAllVacations = catchAsync(async (req, res, next) => {
+const vacationsProposalsCollection = client.db('magazyn').collection('VacationsProposals');
+
+exports.getAllVacationsProposal = catchAsync(async (req, res, next) => {
   const page = req.query.page || 1;
   const limit = 25;
   const {
-    employeeId, start, end, type, thisYear,
+    employeeId, start, end, type, thisYear, status,
   } = req.query;
 
   const isRangeGiven = Boolean(start && end);
@@ -32,9 +38,13 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
     endDate.setUTCHours(23, 59, 59, 999);
   }
 
+  console.log(startDate);
+  console.log(endDate);
+
   const matchStage = {
     ...(employeeId ? { employeeId: { $eq: new ObjectId(employeeId) } } : {}),
     ...(type ? { type: { $eq: type } } : {}),
+    ...(status ? { status: { $eq: status } } : {}),
     ...((start && end) || thisYear ? {
       startVacation: {
         $gte: new Date(startDate),
@@ -62,6 +72,7 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
         type: 1,
         created_at: 1,
         employeeId: 1,
+        status: 1,
         name: { $arrayElemAt: ['$employeeData.name', 0] },
         surname: { $arrayElemAt: ['$employeeData.surname', 0] },
       },
@@ -74,7 +85,7 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
     pipeline.push({ $limit: limit });
   }
 
-  const vacationsList = await vacationsCollection.aggregate(pipeline).toArray();
+  const vacationsList = await vacationsProposalsCollection.aggregate(pipeline).toArray();
   const vacationsSize = vacationsList.length;
 
   res.status(200).json({
@@ -85,44 +96,41 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createVacation = catchAsync(async (req, res, next) => {
+exports.createVacationProposal = catchAsync(async (req, res, next) => {
   validateRequiredFields(req.body, ['id', 'startVacation', 'endVacation', 'type', 'duration']);
 
   const {
     id, startVacation, endVacation, type, duration,
   } = req.body;
 
+  const status = vacationsProposalsStatusTypes.pending;
   const timeNow = new Date();
 
-  const startVacationUtc = new Date(`${startVacation}`);
-  const endVacationUtc = new Date(`${endVacation}`);
-
-  const employeeId = new ObjectId(id);
-
-  const newWorkTime = await vacationsCollection.insertOne({
-    employeeId,
-    startVacation: startVacationUtc,
-    endVacation: endVacationUtc,
-    duration,
+  const vacationProposal = await vacationsProposalsCollection.insertOne({
+    employeeId: new ObjectId(id),
+    startVacation: new Date(startVacation),
+    endVacation: new Date(endVacation),
     type,
+    duration,
+    status,
     created_at: timeNow,
   });
 
   res.status(201).json({
     status: 'success',
-    data: newWorkTime,
+    data: vacationProposal,
   });
 });
 
-exports.getVacation = catchAsync(async (req, res, next) => {
+exports.getVacationProposal = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const userObjectId = new ObjectId(id);
   const query = { _id: userObjectId };
   const options = { };
 
-  const result = await vacationsCollection.findOne(query, options);
+  const result = await vacationsProposalsCollection.findOne(query, options);
 
-  checkResult(result, 'vacation', 'get', 'ID');
+  checkResult(result, 'vacationProposal', 'get', 'ID');
 
   res.status(200).json({
     status: 'success',
@@ -130,10 +138,10 @@ exports.getVacation = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateVacation = catchAsync(async (req, res, next) => {
-  validateRequiredFields(req.body, ['startVacation', 'endVacation', 'duration', 'type', 'employeeId']);
+exports.updateVacationProposal = catchAsync(async (req, res, next) => {
+  validateRequiredFields(req.body, ['status']);
   const {
-    startVacation, endVacation, duration, type, employeeId,
+    startVacation, endVacation, duration, type, employeeId, status,
   } = req.body;
 
   const { id } = req.params;
@@ -146,19 +154,33 @@ exports.updateVacation = catchAsync(async (req, res, next) => {
 
   const update = {
     $set: {
-      startVacation: new Date(startVacation),
-      endVacation: new Date(endVacation),
-      duration,
-      type,
-      employeeId: employeeObjectId,
-      created_at: timeNow,
+      status,
     },
   };
 
+  if (startVacation) {
+    update.$set.startVacation = new Date(startVacation);
+  }
+  if (endVacation) {
+    update.$set.endVacation = new Date(endVacation);
+  }
+  if (duration) {
+    update.$set.duration = duration;
+  }
+  if (type) {
+    update.$set.type = type;
+  }
+  if (employeeId) {
+    update.$set.employeeId = employeeObjectId;
+  }
+  if (timeNow) {
+    update.$set.created_at = timeNow;
+  }
+
   const options = { returnDocument: 'after' };
 
-  const result = await vacationsCollection.findOneAndUpdate(query, update, options);
-  checkResult(result, 'vacation', 'update', 'ID');
+  const result = await vacationsProposalsCollection.findOneAndUpdate(query, update, options);
+  checkResult(result, 'vacationProposal', 'update', 'ID');
 
   res.status(200).json({
     status: 'success',
@@ -166,14 +188,14 @@ exports.updateVacation = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteVacation = catchAsync(async (req, res, next) => {
+exports.deleteVacationProposal = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const userObjectId = new ObjectId(id);
   const query = { _id: userObjectId };
 
-  const result = await vacationsCollection.findOneAndDelete(query);
+  const result = await vacationsProposalsCollection.findOneAndDelete(query);
 
-  checkResult(result, 'vacation');
+  checkResult(result, 'user');
 
   res.status(200).json({
     status: 'success',
