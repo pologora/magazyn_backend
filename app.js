@@ -8,6 +8,7 @@ const employeesRouter = require('./routes/employeesRoutes');
 const worktimeRouter = require('./routes/worktimeRoutes');
 const vacationsRouter = require('./routes/vacationsRoutes');
 const vacationsProposalsRouter = require('./routes/vacationsProposalsRoutes');
+const adminSettingsRouter = require('./routes/adminSettingsRoutes');
 
 const app = express();
 
@@ -21,7 +22,8 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/employees', employeesRouter);
 app.use('/api/v1/worktime', worktimeRouter);
 app.use('/api/v1/vacations', vacationsRouter);
-app.use('/api/v1/vacationsProposals', vacationsProposalsRouter);
+app.use('/api/v1/proposals', vacationsProposalsRouter);
+app.use('/api/v1/settings', adminSettingsRouter);
 
 app.all('*', (req, res, next) => {
   const err = new AppError(`Can't find ${req.originalUrl} on this server`, 404);
