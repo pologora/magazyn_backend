@@ -26,6 +26,8 @@ exports.createUser = catchAsync(async (req, res, next) => {
     name, email, password, confirmPassword, employeeId,
   } = req.body;
 
+  const role = 'user';
+
   if (!checkConfirmPassword(password, confirmPassword)) {
     throw new AppError('Passwords are not the same!', 400);
   }
@@ -41,6 +43,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
     email,
     password: hashedPassword,
     employeeId: employeeObjectId,
+    role,
   });
 
   res.status(201).json({

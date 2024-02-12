@@ -38,9 +38,6 @@ exports.getAllVacationsProposal = catchAsync(async (req, res, next) => {
     endDate.setUTCHours(23, 59, 59, 999);
   }
 
-  console.log(startDate);
-  console.log(endDate);
-
   const matchStage = {
     ...(employeeId ? { employeeId: { $eq: new ObjectId(employeeId) } } : {}),
     ...(type ? { type: { $eq: type } } : {}),
