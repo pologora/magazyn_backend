@@ -81,7 +81,6 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
     status: 'success',
     vacationsSize,
     data: vacationsList,
-    headers: req.headers,
   });
 });
 

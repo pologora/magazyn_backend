@@ -35,9 +35,18 @@ exports.login = catchAsync(async (req, res, next) => {
 
   const token = signToken(id);
 
+  const signedUser = {
+    name: user.name,
+    surname: user.surname,
+    employeeId: user.employeeId,
+    email: user.email,
+    token,
+    id,
+    role: user.role,
+  };
+
   res.status(200).json({
     status: 'success',
-    token,
-    user,
+    data: signedUser,
   });
 });

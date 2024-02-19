@@ -8,9 +8,16 @@ const AppError = require('../utils/appError');
 const hashPassword = require('../utils/hashPassword');
 
 const usersCollection = client.db('magazyn').collection('Users');
+const employeeCollection = client.db('magazyn').collection('Employee');
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const query = {};
+  let query = {};
+
+  if (req.query.employeeId) {
+    const employeeId = new ObjectId(req.query.employeeId);
+    query = { employeeId };
+  }
+
   const options = { projection: { password: 0 } };
   const users = await usersCollection.find(query, options).toArray();
 
@@ -23,7 +30,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 
 exports.createUser = catchAsync(async (req, res, next) => {
   const {
-    name, email, password, confirmPassword, employeeId,
+    name, email, password, confirmPassword, employeeId, surname,
   } = req.body;
 
   const role = 'user';
@@ -32,23 +39,28 @@ exports.createUser = catchAsync(async (req, res, next) => {
     throw new AppError('Passwords are not the same!', 400);
   }
 
-  validateRequiredFields(req.body, ['name', 'password', 'employeeId', 'email', 'confirmPassword']);
+  validateRequiredFields(req.body, ['name', 'surname', 'password', 'employeeId', 'email', 'confirmPassword']);
 
   const hashedPassword = await hashPassword(password);
 
   const employeeObjectId = new ObjectId(employeeId);
+  const employee = await employeeCollection.findOne({ _id: employeeObjectId });
 
-  const user = await usersCollection.insertOne({
+  const user = {
     name,
     email,
+    surname,
     password: hashedPassword,
     employeeId: employeeObjectId,
     role,
-  });
+    isSnti: employee.isSnti,
+  };
+
+  const result = await usersCollection.insertOne(user);
 
   res.status(201).json({
     status: 'success',
-    data: user,
+    data: result,
   });
 });
 

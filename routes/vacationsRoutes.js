@@ -5,7 +5,9 @@ const {
 
 const router = express.Router();
 
-router.route('/').get(getAllVacations).post(createVacation);
+const authProtect = require('../middlewares/authProtect');
+
+router.route('/').get(authProtect, getAllVacations).post(createVacation);
 router.route('/:id').get(getVacation).patch(updateVacation).delete(deleteVacation);
 
 module.exports = router;
