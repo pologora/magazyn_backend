@@ -18,7 +18,14 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     query = { employeeId };
   }
 
-  const options = { projection: { password: 0 } };
+  const options = {
+    projection: {
+      password: 0,
+      passwordResetExpires: 0,
+      passwordResetToken: 0,
+      passwordChangedAt: 0,
+    },
+  };
   const users = await usersCollection.find(query, options).toArray();
 
   res.status(200).json({

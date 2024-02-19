@@ -3,7 +3,7 @@ module.exports = function isChangedPasswordAfter(JWTTimestamp, user) {
   const expiredTime = JWTTimestamp * miliseconds;
 
   if (user.passwordChangedAt) {
-    const passwordChangedAt = new Date(user.passwordChangedAt).getTime();
+    const { passwordChangedAt } = user;
     if (passwordChangedAt >= expiredTime) return true;
   }
 

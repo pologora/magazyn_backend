@@ -34,7 +34,7 @@ module.exports = catchAsync(async (req, res, next) => {
 
   // check if user change password after token was issued
 
-  if (isChangedPassAfter(decoded.exp, user)) {
+  if (isChangedPassAfter(decoded.iat, user)) {
     throw new AppError('User changed his password. Please log in again!', 401);
   }
 
