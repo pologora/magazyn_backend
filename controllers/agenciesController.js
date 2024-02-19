@@ -13,7 +13,6 @@ exports.getAllAgencies = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: result,
-    headers: req.headers,
   });
 });
 

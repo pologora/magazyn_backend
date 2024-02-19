@@ -43,6 +43,7 @@ exports.login = catchAsync(async (req, res, next) => {
     token,
     id,
     role: user.role,
+    isSnti: user.isSnti,
   };
 
   res.status(200).json({

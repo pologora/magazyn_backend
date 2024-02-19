@@ -45,7 +45,6 @@ exports.getAllWorkTime = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: workdays,
-    headers: req.headers,
   });
 });
 
