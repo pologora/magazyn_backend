@@ -86,17 +86,13 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
+      message: 'Token send to email!',
     });
   } catch (error) {
     const updateUser = { $set: { passwordResetExpires: null, passwordResetToken: null } };
     await usersCollection.findOneAndUpdate({ _id: user._id }, updateUser);
     throw new AppError('Cant send an email. Please try again later', 500);
   }
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Token send to email!',
-  });
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
@@ -136,5 +132,33 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+  });
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  validateRequiredFields(req.body, ['currentPassword', 'password', 'confirmPassword']);
+  const {
+    currentPassword, password, confirmPassword,
+  } = req.body;
+
+  const isPassAndConfirmTheSame = checkConfirmPassword(password, confirmPassword);
+  if (!isPassAndConfirmTheSame) {
+    throw new AppError('Hasło i potwierdź hasło muszą być jednakowe', 400);
+  }
+
+  const validPassword = compareSubmittedPassword(currentPassword, req.user.password);
+  if (!validPassword) {
+    throw new AppError('Nieprawidłowe hasło', 401);
+  }
+
+  const hashedPassword = await hashPassword(password);
+  await usersCollection.findOneAndUpdate(
+    { _id: req.user._id },
+    { $set: { password: hashedPassword } },
+  );
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated',
   });
 });
