@@ -6,6 +6,8 @@ const validateRequiredFields = require('../utils/validateRequiredFields');
 const checkConfirmPassword = require('../utils/checkConfirmPassword');
 const AppError = require('../utils/appError');
 const hashPassword = require('../utils/hashPassword');
+const filterAllowedFields = require('../utils/filterAllowedFields');
+const compareSubmittedPassword = require('../utils/compareSubmittedPassword');
 
 const usersCollection = client.db('magazyn').collection('Users');
 const employeeCollection = client.db('magazyn').collection('Employee');
@@ -89,10 +91,11 @@ exports.getUser = catchAsync(async (req, res, next) => {
 exports.updateUser = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const userObjectId = new ObjectId(id);
-  const newData = req.body;
+  const data = req.body;
+  const filteredData = filterAllowedFields(data, 'email', 'name', 'surname', 'email');
 
   const query = { _id: userObjectId };
-  const updateDocument = { $set: newData };
+  const updateDocument = { $set: filteredData };
   const options = { returnDocument: 'after' };
 
   const result = await usersCollection.findOneAndUpdate(query, updateDocument, options);
@@ -117,5 +120,48 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: result,
+  });
+});
+
+exports.updateMe = catchAsync(async (req, res, next) => {
+  if (req.body.password) {
+    throw new AppError('This route is not for password update!', 400);
+  }
+  // filter fields that not allowed to be updated
+  const data = req.body;
+  const filteredData = filterAllowedFields(data, 'email');
+
+  const query = { _id: req.user._id };
+  const options = { returnDocument: 'after' };
+  const update = { $set: filteredData };
+
+  await usersCollection.findOneAndUpdate(
+    query,
+    update,
+    options,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
+});
+
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  const query = { _id: req.user._id };
+  const { password } = req.body;
+
+  const validPassword = compareSubmittedPassword(password, req.user.password);
+  if (!validPassword) {
+    throw new AppError('Nieprawidłowe hasło', 401);
+  }
+
+  await usersCollection.findOneAndDelete(
+    query,
+  );
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });

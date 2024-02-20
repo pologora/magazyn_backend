@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 const crypto = require('crypto');
+const { ObjectId } = require('mongodb');
 const catchAsync = require('../utils/catchAsync');
 const { createUser } = require('./usersController');
 const { client } = require('../config/db');
@@ -13,6 +14,7 @@ const checkConfirmPassword = require('../utils/checkConfirmPassword');
 const hashPassword = require('../utils/hashPassword');
 
 const usersCollection = client.db('magazyn').collection('Users');
+const employeeCollection = client.db('magazyn').collection('Employee');
 
 exports.signup = catchAsync(async (req, res, next) => {
   createUser(req, res, next);
@@ -41,6 +43,17 @@ exports.login = catchAsync(async (req, res, next) => {
 
   const token = signToken(id);
 
+  const cookieOptions = {
+    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true;
+  }
+
+  res.cookie('jwt', token, cookieOptions);
+
   const signedUser = {
     name: user.name,
     surname: user.surname,
@@ -67,14 +80,18 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   // 2) generate the random token and update user
-  const { passwordResetExpires, passwordResetToken, resetToken } = createPasswordResetToken();
-  const update = { $set: { passwordResetExpires, passwordResetToken } };
+  const expiredTime = 1000 * 10 * 60;
+  const {
+    tokenExpires,
+    hashedToken,
+    resetToken,
+  } = createPasswordResetToken(expiredTime);
+  const update = { $set: { tokenExpires, hashedToken } };
   await usersCollection.findOneAndUpdate({ _id: user._id }, update);
 
   // 3) send email to user with a resetToken
-
   try {
-    const resetURL = `http://localhost:3000/api/v1/users/reset/${resetToken}`;
+    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/reset/${resetToken}`;
 
     const mailOptions = {
       email: user.email,
@@ -89,7 +106,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       message: 'Token send to email!',
     });
   } catch (error) {
-    const updateUser = { $set: { passwordResetExpires: null, passwordResetToken: null } };
+    const updateUser = { $set: { tokenExpires: null, hashedToken: null } };
     await usersCollection.findOneAndUpdate({ _id: user._id }, updateUser);
     throw new AppError('Cant send an email. Please try again later', 500);
   }
@@ -103,7 +120,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
   const user = await usersCollection.findOne({
     passwordResetToken,
-    passwordResetExpires: { $gte: now },
+    tokenExpires: { $gte: now },
   });
 
   if (!user) {
@@ -160,5 +177,109 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     message: 'Password updated',
+  });
+});
+
+exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
+  const {
+    employeeId, email, name, surname,
+  } = req.body;
+  validateRequiredFields(req.body, ['email', 'employeeId', 'name', 'surname']);
+
+  const employeeObjectId = new ObjectId(employeeId);
+  const employee = await employeeCollection.findOne({ _id: employeeObjectId });
+
+  const milisec = 1000;
+  const sec = 60;
+  const hour = 60;
+  const day = 24;
+  const daysToExpire = 3;
+
+  const expiredTime = milisec * sec * hour * day * daysToExpire;
+  const {
+    tokenExpires,
+    hashedToken,
+    resetToken,
+  } = createPasswordResetToken(expiredTime);
+
+  const user = {
+    name,
+    email,
+    surname,
+    tokenExpires,
+    token: hashedToken,
+    employeeId: employeeObjectId,
+    role: 'user',
+    isSnti: employee.isSnti,
+  };
+
+  // const isUserExist = await usersCollection.findOne({ employeeId: employeeObjectId });
+  await usersCollection.insertOne(user);
+
+  // 3) send email to user with a registration token
+  try {
+    const registrationLink = `${req.protocol}://${req.get('host')}/api/v1/users/registerMe/${resetToken}`;
+
+    const mailOptions = {
+      email: user.email,
+      subject: 'Link do rejestracji (72 hours)',
+      message: `Link do rejestracji: ${registrationLink}`,
+    };
+
+    await sendEmail(mailOptions);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token send to email!',
+    });
+  } catch (error) {
+    await usersCollection.findOneAndDelete({ employeeId: employeeObjectId });
+    throw new AppError('Cant send an email. Please try again later', 500);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
+});
+
+exports.registerMe = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+  const now = new Date().getTime();
+  const oneSecond = 1000;
+
+  const passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
+  const user = await usersCollection.findOne({
+    token: passwordResetToken,
+    tokenExpires: { $gte: now },
+  });
+
+  if (!user) {
+    throw new AppError('Miną chas na rejestrację!', 400);
+  }
+
+  const { password, confirmPassword } = req.body;
+  const passIsValid = checkConfirmPassword(password, confirmPassword);
+
+  if (!passIsValid) {
+    throw new AppError('Hasło i potwierdź hasło muszą być jednakowe', 400);
+  }
+
+  const hashedPassword = await hashPassword(password);
+  const query = { _id: user._id };
+  const update = {
+    $set: {
+      password: hashedPassword,
+      token: null,
+      tokenExpires: null,
+      passwordChangedAt: now - oneSecond,
+    },
+  };
+
+  await usersCollection.findOneAndUpdate(query, update);
+
+  res.status(200).json({
+    status: 'success',
+    data: user,
   });
 });
