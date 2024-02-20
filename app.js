@@ -2,6 +2,8 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
@@ -17,6 +19,10 @@ const lastYearLeftDaysRouter = require('./routes/lastYearVacationDaysLeftRoutes'
 const app = express();
 
 // 1) globals middlewares
+
+// security headers
+app.use(helmet());
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -27,9 +33,18 @@ const limiter = rateLimit({
   message: 'Too many request, please try again in an hour!',
 });
 
+// limit request from users
 app.use('/api', limiter);
+
+// cors
 app.use(cors());
-app.use(express.json());
+
+// body parser
+app.use(express.json({ limit: '10kb' }));
+
+// Data sanitization against noSql query injection
+app.use(mongoSanitize());
+// Data sanitization against xss
 
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/employees', employeesRouter);
