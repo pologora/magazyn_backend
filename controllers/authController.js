@@ -9,9 +9,9 @@ const compareSubmittedPassword = require('../utils/compareSubmittedPassword');
 const AppError = require('../utils/appError');
 const signToken = require('../utils/signToken');
 const createPasswordResetToken = require('../utils/createPasswordResetToken');
-const sendEmail = require('../utils/email');
 const checkConfirmPassword = require('../utils/checkConfirmPassword');
 const hashPassword = require('../utils/hashPassword');
+const Email = require('../utils/email');
 
 const usersCollection = client.db('magazyn').collection('Users');
 const employeeCollection = client.db('magazyn').collection('Employee');
@@ -93,13 +93,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   try {
     const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/reset/${resetToken}`;
 
-    const mailOptions = {
-      email: user.email,
-      subject: 'Reset password (valid for 10 minutes)',
-      message: `Reset password link: ${resetURL}`,
-    };
-
-    await sendEmail(mailOptions);
+    new Email(user, resetURL, 'no-replay@snti.pl').sendResetPassword();
 
     res.status(200).json({
       status: 'success',
@@ -213,20 +207,13 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
     isSnti: employee.isSnti,
   };
 
-  // const isUserExist = await usersCollection.findOne({ employeeId: employeeObjectId });
   await usersCollection.insertOne(user);
 
   // 3) send email to user with a registration token
   try {
     const registrationLink = `${req.protocol}://${req.get('host')}/api/v1/users/registerMe/${resetToken}`;
 
-    const mailOptions = {
-      email: user.email,
-      subject: 'Link do rejestracji (72 hours)',
-      message: `Link do rejestracji: ${registrationLink}`,
-    };
-
-    await sendEmail(mailOptions);
+    new Email(user, registrationLink, 'no-reply@snti.pl').sendRejestration();
 
     res.status(200).json({
       status: 'success',
