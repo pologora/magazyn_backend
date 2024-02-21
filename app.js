@@ -16,6 +16,7 @@ const vacationsProposalsRouter = require('./routes/vacationsProposalsRoutes');
 const adminSettingsRouter = require('./routes/adminSettingsRoutes');
 const agenciesRouter = require('./routes/agenciesRoutes');
 const lastYearLeftDaysRouter = require('./routes/lastYearVacationDaysLeftRoutes');
+const { corsOptions } = require('./config/appOptions');
 
 const app = express();
 
@@ -38,10 +39,7 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // cors
-const corsOptions = {
-  origin: 'http://localhost:5173',
-  credentials: true, // Allows cookies to be sent from frontend to backend
-};
+
 app.use(cors(corsOptions));
 
 // body parser
@@ -50,7 +48,6 @@ app.use(cookieParser());
 
 // test middleware
 app.use((req, res, next) => {
-  console.log('test middleware', req.cookies);
   next();
 });
 

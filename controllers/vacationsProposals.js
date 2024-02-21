@@ -93,23 +93,24 @@ exports.getAllVacationsProposal = catchAsync(async (req, res, next) => {
 });
 
 exports.createVacationProposal = catchAsync(async (req, res, next) => {
-  validateRequiredFields(req.body, ['id', 'startVacation', 'endVacation', 'type', 'duration']);
+  validateRequiredFields(req.body, ['employeeId', 'startVacation', 'endVacation', 'type', 'duration']);
 
   const {
-    id, startVacation, endVacation, type, duration,
+    employeeId, startVacation, endVacation, type, duration, description,
   } = req.body;
 
   const status = vacationsProposalsStatusTypes.pending;
   const timeNow = new Date();
 
   const vacationProposal = await vacationsProposalsCollection.insertOne({
-    employeeId: new ObjectId(id),
+    employeeId: new ObjectId(employeeId),
     startVacation: new Date(startVacation),
     endVacation: new Date(endVacation),
     type,
     duration,
     status,
     created_at: timeNow,
+    description,
   });
 
   res.status(201).json({
