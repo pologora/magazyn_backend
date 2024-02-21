@@ -9,13 +9,7 @@ const isChangedPassAfter = require('../utils/isChangedPassAfter');
 const usersCollection = client.db('magazyn').collection('Users');
 
 module.exports = catchAsync(async (req, res, next) => {
-  const auth = req.headers.authorization;
-
-  if (!auth || !auth.startsWith('Bearer')) {
-    throw new AppError('You are not logged in! Please log in to get access!', 401);
-  }
-
-  const token = auth.split(' ')[1];
+  const token = req.cookies.jwt;
 
   if (!token) {
     throw new AppError('You are not logged in! Please log in to get access!', 401);
