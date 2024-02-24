@@ -66,6 +66,7 @@ exports.getAllVacationsProposal = catchAsync(async (req, res, next) => {
         startVacation: '$startVacation',
         endVacation: '$endVacation',
         duration: 1,
+        description: 1,
         type: 1,
         created_at: 1,
         employeeId: 1,
@@ -136,16 +137,13 @@ exports.getVacationProposal = catchAsync(async (req, res, next) => {
 });
 
 exports.updateVacationProposal = catchAsync(async (req, res, next) => {
-  validateRequiredFields(req.body, ['status']);
   const {
-    startVacation, endVacation, duration, type, employeeId, status,
+    startVacation, endVacation, duration, type, status, description,
   } = req.body;
 
   const { id } = req.params;
   const vacationObjectId = new ObjectId(id);
   const query = { _id: vacationObjectId };
-
-  const employeeObjectId = new ObjectId(employeeId);
 
   const timeNow = new Date();
 
@@ -167,12 +165,11 @@ exports.updateVacationProposal = catchAsync(async (req, res, next) => {
   if (type) {
     update.$set.type = type;
   }
-  if (employeeId) {
-    update.$set.employeeId = employeeObjectId;
+  if (description) {
+    update.$set.description = description;
   }
-  if (timeNow) {
-    update.$set.created_at = timeNow;
-  }
+
+  update.$set.created_at = timeNow;
 
   const options = { returnDocument: 'after' };
 

@@ -65,6 +65,7 @@ exports.login = catchAsync(async (req, res, next) => {
     id,
     role: user.role,
     isSnti: user.isSnti,
+    vacationDaysPerYear: user.vacationDaysPerYear,
   };
 
   res.status(200).json({
@@ -115,7 +116,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   const passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
   const user = await usersCollection.findOne({
-    passwordResetToken,
+    hashedToken: passwordResetToken,
     tokenExpires: { $gte: now },
   });
 
@@ -135,8 +136,8 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const update = {
     $set: {
       password: hashedPassword,
-      passwordResetToken: null,
-      passwordResetExpires: null,
+      hashedToken: null,
+      tokenExpires: null,
       passwordChangedAt: now - oneSecond,
     },
   };
@@ -159,7 +160,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     throw new AppError('Hasło i potwierdź hasło muszą być jednakowe', 400);
   }
 
-  const validPassword = compareSubmittedPassword(currentPassword, req.user.password);
+  const validPassword = await compareSubmittedPassword(currentPassword, req.user.password);
   if (!validPassword) {
     throw new AppError('Nieprawidłowe hasło', 401);
   }
@@ -178,12 +179,14 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
 exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
   const {
-    employeeId, email, name, surname,
+    employeeId, email,
   } = req.body;
-  validateRequiredFields(req.body, ['email', 'employeeId', 'name', 'surname']);
+  validateRequiredFields(req.body, ['email', 'employeeId']);
 
   const employeeObjectId = new ObjectId(employeeId);
   const employee = await employeeCollection.findOne({ _id: employeeObjectId });
+
+  const { name, surname } = employee;
 
   const milisec = 1000;
   const sec = 60;
@@ -195,7 +198,7 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
   const {
     tokenExpires,
     hashedToken,
-    resetToken,
+    resetToken: registrationToken,
   } = createPasswordResetToken(expiredTime);
 
   const user = {
@@ -207,13 +210,17 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
     employeeId: employeeObjectId,
     role: 'user',
     isSnti: employee.isSnti,
+    vacationDaysPerYear: employee.vacationDaysPerYear,
+    passwordChangedAt: new Date(),
+    registered: false,
   };
 
   await usersCollection.insertOne(user);
 
   // 3) send email to user with a registration token
   try {
-    const registrationLink = `${req.protocol}://${req.get('host')}/api/v1/users/registerMe/${resetToken}`;
+    // const registrationLink = `${req.protocol}://${req.get('host')}/signup/${resetToken}`;
+    const registrationLink = `http://localhost:5173/signup/${registrationToken}`;
 
     new Email(user, registrationLink, 'no-reply@snti.pl').sendRejestration();
 
@@ -262,6 +269,7 @@ exports.registerMe = catchAsync(async (req, res, next) => {
       token: null,
       tokenExpires: null,
       passwordChangedAt: now - oneSecond,
+      registered: true,
     },
   };
 

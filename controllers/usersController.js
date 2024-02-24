@@ -92,7 +92,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const userObjectId = new ObjectId(id);
   const data = req.body;
-  const filteredData = filterAllowedFields(data, 'email', 'name', 'surname', 'email');
+  const filteredData = filterAllowedFields(data, 'email', 'name', 'surname');
 
   const query = { _id: userObjectId };
   const updateDocument = { $set: filteredData };

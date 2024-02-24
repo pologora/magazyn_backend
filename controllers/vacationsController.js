@@ -42,7 +42,6 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
       },
     } : {}),
   };
-
   const pipeline = [
     { $match: matchStage },
     {
@@ -85,10 +84,10 @@ exports.getAllVacations = catchAsync(async (req, res, next) => {
 });
 
 exports.createVacation = catchAsync(async (req, res, next) => {
-  validateRequiredFields(req.body, ['id', 'startVacation', 'endVacation', 'type', 'duration']);
+  validateRequiredFields(req.body, ['employeeId', 'startVacation', 'endVacation', 'type', 'duration']);
 
   const {
-    id, startVacation, endVacation, type, duration,
+    employeeId, startVacation, endVacation, type, duration,
   } = req.body;
 
   const timeNow = new Date();
@@ -96,10 +95,10 @@ exports.createVacation = catchAsync(async (req, res, next) => {
   const startVacationUtc = new Date(`${startVacation}`);
   const endVacationUtc = new Date(`${endVacation}`);
 
-  const employeeId = new ObjectId(id);
+  const employeeObjectId = new ObjectId(employeeId);
 
-  const newWorkTime = await vacationsCollection.insertOne({
-    employeeId,
+  const newVacation = await vacationsCollection.insertOne({
+    employeeId: employeeObjectId,
     startVacation: startVacationUtc,
     endVacation: endVacationUtc,
     duration,
@@ -109,7 +108,7 @@ exports.createVacation = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     status: 'success',
-    data: newWorkTime,
+    data: newVacation,
   });
 });
 

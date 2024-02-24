@@ -4,6 +4,7 @@ const catchAsync = require('../utils/catchAsync');
 const checkResult = require('../utils/checkResult');
 const validateRequiredFields = require('../utils/validateRequiredFields');
 const AppError = require('../utils/appError');
+const filterAllowedFields = require('../utils/filterAllowedFields');
 
 const employeeCollection = client.db('magazyn').collection('Employee');
 
@@ -115,6 +116,7 @@ exports.updateEmployee = catchAsync(async (req, res, next) => {
     pin,
     vacationDaysPerYear,
     agency,
+    isSnti,
   } = req.body;
 
   const existingEmployee = await employeeCollection.findOne({ pin, _id: { $ne: userObjectId } });
@@ -122,8 +124,18 @@ exports.updateEmployee = catchAsync(async (req, res, next) => {
   if (existingEmployee) {
     throw new AppError('Pin already in use');
   }
-
-  const newData = { ...req.body };
+  const newData = filterAllowedFields(
+    req.body,
+    'email',
+    'name',
+    'surname',
+    'pin',
+    'agency',
+    'vacationDaysPerYear',
+    'isSnti',
+    'isWorking',
+    'userId',
+  );
 
   if (vacationDaysPerYear) {
     const newVacationDaysPerYear = vacationDaysPerYear
@@ -134,6 +146,10 @@ exports.updateEmployee = catchAsync(async (req, res, next) => {
   if (agency) {
     const agencyId = agency ? new ObjectId(agency) : null;
     newData.agency = agencyId;
+  }
+
+  if (isSnti) {
+    newData.agency = null;
   }
 
   const query = { _id: userObjectId };

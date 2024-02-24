@@ -62,7 +62,7 @@ app.use('/api/v1/vacations', vacationsRouter);
 app.use('/api/v1/proposals', vacationsProposalsRouter);
 app.use('/api/v1/settings', adminSettingsRouter);
 app.use('/api/v1/agencies', agenciesRouter);
-app.use('/api/v1/last', lastYearLeftDaysRouter);
+app.use('/api/v1/lastYearVacations', lastYearLeftDaysRouter);
 
 app.all('*', (req, res, next) => {
   const err = new AppError(`Can't find ${req.originalUrl} on this server`, 404);
