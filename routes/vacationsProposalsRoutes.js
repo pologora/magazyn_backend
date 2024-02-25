@@ -9,7 +9,13 @@ const router = express.Router();
 
 router.use(authProtect);
 
-router.route('/').get(getAllVacationsProposal).post(createVacationProposal);
-router.route('/:id').get(getVacationProposal).patch(updateVacationProposal).delete(deleteVacationProposal);
+router.route('/')
+  .get(authProtect, getAllVacationsProposal)
+  .post(authProtect, createVacationProposal);
+
+router.route('/:id')
+  .get(authProtect, getVacationProposal)
+  .patch(authProtect, updateVacationProposal)
+  .delete(authProtect, deleteVacationProposal);
 
 module.exports = router;

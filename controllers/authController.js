@@ -51,9 +51,9 @@ exports.login = catchAsync(async (req, res, next) => {
     secure: false,
   };
 
-  if (process.env.NODE_ENV === 'production') {
-    cookieOptions.secure = true;
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   cookieOptions.secure = true;
+  // }
 
   res.cookie('jwt', token, cookieOptions);
 
@@ -211,8 +211,6 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
     role: 'user',
     isSnti: employee.isSnti,
     vacationDaysPerYear: employee.vacationDaysPerYear,
-    passwordChangedAt: new Date(),
-    registered: false,
   };
 
   await usersCollection.insertOne(user);
@@ -272,6 +270,12 @@ exports.registerMe = catchAsync(async (req, res, next) => {
       registered: true,
     },
   };
+
+  const employeeObjectId = new ObjectId(user.employeeId);
+  await employeeCollection.findOneAndUpdate(
+    { _id: employeeObjectId },
+    { $set: { userId: user._id } },
+  );
 
   await usersCollection.findOneAndUpdate(query, update);
 
