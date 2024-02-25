@@ -49,6 +49,7 @@ exports.login = catchAsync(async (req, res, next) => {
     expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * oneDay),
     httpOnly: true,
     secure: false,
+    sameSite: 'None',
   };
 
   // if (process.env.NODE_ENV === 'production') {
