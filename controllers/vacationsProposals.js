@@ -83,8 +83,8 @@ exports.getAllVacationsProposal = catchAsync(async (req, res, next) => {
     pipeline.push({ $limit: limit });
   }
 
+  const vacationsSize = await vacationsProposalsCollection.countDocuments();
   const vacationsList = await vacationsProposalsCollection.aggregate(pipeline).toArray();
-  const vacationsSize = vacationsList.length;
 
   res.status(200).json({
     status: 'success',
