@@ -80,7 +80,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) get user by email
   const user = await usersCollection.findOne({ email: req.body.email });
   if (!user) {
-    throw new AppError('No user with email address', 404);
+    throw new AppError('Nie można znaleźć użytkownika z podanym adresem email', 404);
   }
 
   // 2) generate the random token and update user
