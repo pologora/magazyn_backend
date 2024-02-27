@@ -7,7 +7,13 @@ const router = express.Router();
 
 const authProtect = require('../middlewares/authProtect');
 
-router.route('/').get(authProtect, getAllVacations).post(createVacation);
-router.route('/:id').get(getVacation).patch(updateVacation).delete(deleteVacation);
+router.route('/')
+  .get(getAllVacations)
+  .post(authProtect, createVacation);
+
+router.route('/:id')
+  .get(getVacation)
+  .patch(authProtect, updateVacation)
+  .delete(authProtect, deleteVacation);
 
 module.exports = router;

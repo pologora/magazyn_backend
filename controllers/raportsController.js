@@ -14,8 +14,6 @@ exports.getAllSntiRaport = catchAsync(async (req, res, next) => {
   start.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
 
-  console.log(start, end);
-
   const sntiEmployees = await employeeCollection.find({ isSnti: true }).toArray();
 
   const employeeDataPromises = sntiEmployees.map(async (employee) => {

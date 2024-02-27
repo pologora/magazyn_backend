@@ -10,11 +10,11 @@ const router = express.Router();
 router.use(authProtect);
 
 router.route('/')
-  .get(authProtect, getAllVacationsProposal)
+  .get(getAllVacationsProposal)
   .post(authProtect, createVacationProposal);
 
 router.route('/:id')
-  .get(authProtect, getVacationProposal)
+  .get(getVacationProposal)
   .patch(authProtect, updateVacationProposal)
   .delete(authProtect, deleteVacationProposal);
 

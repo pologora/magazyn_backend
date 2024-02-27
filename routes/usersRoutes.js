@@ -37,7 +37,10 @@ router.post('/createNewUserRegistration', authProtect, restictTo('admin'), creat
 
 router.patch('/registerMe/:token', registerMe);
 
-router.route('/').get(authProtect, restictTo('admin'), getAllUsers).post(createUser);
+router.route('/')
+  .get(authProtect, restictTo('admin'), getAllUsers)
+  .post(authProtect, restictTo('admin'), createUser);
+
 router.route('/:id')
   .get(getUser)
   .patch(authProtect, restictTo('admin'), updateUser)
