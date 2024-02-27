@@ -16,6 +16,7 @@ const vacationsProposalsRouter = require('./routes/vacationsProposalsRoutes');
 const adminSettingsRouter = require('./routes/adminSettingsRoutes');
 const agenciesRouter = require('./routes/agenciesRoutes');
 const lastYearLeftDaysRouter = require('./routes/lastYearVacationDaysLeftRoutes');
+const raportsRouter = require('./routes/raportsRoutes');
 const { corsOptions } = require('./config/appOptions');
 
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/v1/proposals', vacationsProposalsRouter);
 app.use('/api/v1/settings', adminSettingsRouter);
 app.use('/api/v1/agencies', agenciesRouter);
 app.use('/api/v1/lastYearVacations', lastYearLeftDaysRouter);
+app.use('/api/v1/raports', raportsRouter);
 
 app.all('*', (req, res, next) => {
   const err = new AppError(`Can't find ${req.originalUrl} on this server`, 404);
