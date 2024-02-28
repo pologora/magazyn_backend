@@ -9,10 +9,10 @@ const workTimeCollection = client.db('magazyn').collection('Workdays');
 exports.getAllSntiRaport = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.query;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  const start = new Date(`${startDate}Z`);
+  const end = new Date(`${endDate}Z`);
+  start.setUTCHours(0, 0, 0, 0);
+  end.setUTCHours(23, 59, 59, 999);
 
   const sntiEmployees = await employeeCollection.find({ isSnti: true }).toArray();
 
@@ -136,10 +136,10 @@ exports.getRaportByEmployeeId = catchAsync(async (req, res, next) => {
   validateRequiredFields(req.query, ['startDate', 'endDate']);
   const { startDate, endDate } = req.query;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  const start = new Date(`${startDate}Z`);
+  const end = new Date(`${endDate}Z`);
+  start.setUTCHours(0, 0, 0, 0);
+  end.setUTCHours(23, 59, 59, 999);
 
   const employeeData = await employeeCollection.aggregate([
     { $match: { _id: new ObjectId(id) } },
@@ -251,10 +251,10 @@ exports.getRaportByEmployeeId = catchAsync(async (req, res, next) => {
 exports.getEmployeesOveralHours = catchAsync(async (req, res, next) => {
   const { startDate, endDate, isSnti = false } = req.query;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  const start = new Date(`${startDate}Z`);
+  const end = new Date(`${endDate}Z`);
+  start.setUTCHours(0, 0, 0, 0);
+  end.setUTCHours(23, 59, 59, 999);
 
   const result = await workTimeCollection.aggregate([
     {
