@@ -177,10 +177,12 @@ exports.deleteEmployee = catchAsync(async (req, res, next) => {
 
   const workdaysCollection = client.db('magazyn').collection('Workdays');
   const vacationCollection = client.db('magazyn').collection('Vacations');
+  const usersCollection = client.db('magazyn').collection('Users');
 
   await employeeCollection.findOneAndDelete(query);
   await workdaysCollection.deleteMany(filterEmployee);
   await vacationCollection.deleteMany(filterEmployee);
+  await usersCollection.findOneAndDelete(filterEmployee);
 
   res.status(200).json({
     status: 'success',
