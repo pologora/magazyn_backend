@@ -174,15 +174,18 @@ exports.deleteEmployee = catchAsync(async (req, res, next) => {
   const employeeObjectId = new ObjectId(id);
   const query = { _id: employeeObjectId };
   const filterEmployee = { employeeId: employeeObjectId };
+  const filterEmployeePendingProposals = { employeeId: employeeObjectId, status: 'pending' };
 
   const workdaysCollection = client.db('magazyn').collection('Workdays');
   const vacationCollection = client.db('magazyn').collection('Vacations');
   const usersCollection = client.db('magazyn').collection('Users');
+  const proposalsCollection = client.db('magazyn').collection('VacationsProposals');
 
   await employeeCollection.findOneAndDelete(query);
   await workdaysCollection.deleteMany(filterEmployee);
   await vacationCollection.deleteMany(filterEmployee);
   await usersCollection.findOneAndDelete(filterEmployee);
+  await proposalsCollection.deleteMany(filterEmployeePendingProposals);
 
   res.status(200).json({
     status: 'success',

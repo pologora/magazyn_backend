@@ -212,7 +212,11 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
     role: 'user',
   };
 
-  await usersCollection.insertOne(user);
+  try {
+    await usersCollection.insertOne(user);
+  } catch (error) {
+    throw new AppError('Cant send an email. Please try again later', 500);
+  }
 
   // 3) send email to user with a registration token
   try {
@@ -228,11 +232,6 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
     await usersCollection.findOneAndDelete({ employeeId: employeeObjectId });
     throw new AppError('Cant send an email. Please try again later', 500);
   }
-
-  res.status(200).json({
-    status: 'success',
-    data: null,
-  });
 });
 
 exports.registerMe = catchAsync(async (req, res, next) => {
