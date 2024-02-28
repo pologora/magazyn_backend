@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const { ObjectId } = require('mongodb');
 const { client } = require('../config/db');
 const catchAsync = require('../utils/catchAsync');
@@ -94,10 +95,18 @@ exports.getAllVacationsProposal = catchAsync(async (req, res, next) => {
 });
 
 exports.createVacationProposal = catchAsync(async (req, res, next) => {
-  validateRequiredFields(req.body, ['employeeId', 'startVacation', 'endVacation', 'type', 'duration']);
+  validateRequiredFields(req.body, [
+    'employeeId',
+    'startVacation',
+    'endVacation',
+    'type',
+    'duration',
+    'name',
+    'surname',
+  ]);
 
   const {
-    employeeId, startVacation, endVacation, type, duration, description,
+    employeeId, startVacation, endVacation, type, duration, description, name, surname,
   } = req.body;
 
   const status = vacationsProposalsStatusTypes.pending;
@@ -112,6 +121,8 @@ exports.createVacationProposal = catchAsync(async (req, res, next) => {
     status,
     created_at: timeNow,
     description,
+    name,
+    surname,
   });
 
   res.status(201).json({
@@ -138,7 +149,7 @@ exports.getVacationProposal = catchAsync(async (req, res, next) => {
 
 exports.updateVacationProposal = catchAsync(async (req, res, next) => {
   const {
-    startVacation, endVacation, duration, type, status, description,
+    startVacation, endVacation, duration, type, status, description, created_at,
   } = req.body;
 
   const { id } = req.params;
@@ -168,8 +179,9 @@ exports.updateVacationProposal = catchAsync(async (req, res, next) => {
   if (description) {
     update.$set.description = description;
   }
-
-  update.$set.created_at = timeNow;
+  if (created_at) {
+    update.$set.created_at = timeNow;
+  }
 
   const options = { returnDocument: 'after' };
 

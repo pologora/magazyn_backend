@@ -9,7 +9,7 @@ const filterAllowedFields = require('../utils/filterAllowedFields');
 const employeeCollection = client.db('magazyn').collection('Employee');
 
 exports.getAllEmployees = catchAsync(async (req, res, next) => {
-  const { isWorking } = req.query;
+  const { isWorking, isSnti } = req.query;
   let employees;
 
   if (isWorking) {
@@ -46,6 +46,9 @@ exports.getAllEmployees = catchAsync(async (req, res, next) => {
         },
       ])
       .toArray();
+  } else if (isSnti) {
+    const queryObj = { isSnti: true };
+    employees = await employeeCollection.find(queryObj).toArray();
   } else {
     employees = await employeeCollection.find({}).toArray();
   }
@@ -168,15 +171,18 @@ exports.updateEmployee = catchAsync(async (req, res, next) => {
 
 exports.deleteEmployee = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const userObjectId = new ObjectId(id);
-  const query = { _id: userObjectId };
+  const employeeObjectId = new ObjectId(id);
+  const query = { _id: employeeObjectId };
+  const filterEmployee = { employeeId: employeeObjectId };
 
-  const result = await employeeCollection.findOneAndDelete(query);
+  const workdaysCollection = client.db('magazyn').collection('Workdays');
+  const vacationCollection = client.db('magazyn').collection('Vacations');
 
-  checkResult(result, 'user');
+  await employeeCollection.findOneAndDelete(query);
+  await workdaysCollection.deleteMany(filterEmployee);
+  await vacationCollection.deleteMany(filterEmployee);
 
   res.status(200).json({
     status: 'success',
-    data: result,
   });
 });

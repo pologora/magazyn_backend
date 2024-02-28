@@ -95,7 +95,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 3) send email to user with a resetToken
   try {
-    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/reset/${resetToken}`;
+    const resetURL = `http://localhost:5173/resetPassword/${resetToken}`;
 
     new Email(user, resetURL, 'no-replay@snti.pl').sendResetPassword();
 
@@ -210,15 +210,12 @@ exports.createNewUserRegistration = catchAsync(async (req, res, next) => {
     token: hashedToken,
     employeeId: employeeObjectId,
     role: 'user',
-    isSnti: employee.isSnti,
-    vacationDaysPerYear: employee.vacationDaysPerYear,
   };
 
   await usersCollection.insertOne(user);
 
   // 3) send email to user with a registration token
   try {
-    // const registrationLink = `${req.protocol}://${req.get('host')}/signup/${resetToken}`;
     const registrationLink = `http://localhost:5173/signup/${registrationToken}`;
 
     new Email(user, registrationLink, 'no-reply@snti.pl').sendRejestration();
