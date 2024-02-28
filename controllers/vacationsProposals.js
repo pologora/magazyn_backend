@@ -4,6 +4,7 @@ const { client } = require('../config/db');
 const catchAsync = require('../utils/catchAsync');
 const checkResult = require('../utils/checkResult');
 const validateRequiredFields = require('../utils/validateRequiredFields');
+const Email = require('../utils/email');
 
 const vacationsProposalsStatusTypes = {
   pending: 'pending',
@@ -124,6 +125,16 @@ exports.createVacationProposal = catchAsync(async (req, res, next) => {
     name,
     surname,
   });
+
+  const employeeCollection = client.db('magazyn').collection('Employee');
+  const employee = await employeeCollection.findOne({ _id: new ObjectId(employeeId) });
+
+  const emailUser = { email: employee.email, name, surname };
+  const emailBodyText = `${startVacation.slice(0, 10)} - ${endVacation.slice(0, 10)}, 
+  długość ${duration} dni, 
+ ${type}`;
+
+  new Email(emailUser, undefined, 'no-reply@snti.pl', emailBodyText).sendProposalCreation();
 
   res.status(201).json({
     status: 'success',

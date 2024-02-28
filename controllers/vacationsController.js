@@ -1,4 +1,4 @@
-const { ObjectId } = require('mongodb');
+const { ObjectId, Double } = require('mongodb');
 const { client } = require('../config/db');
 const catchAsync = require('../utils/catchAsync');
 const checkResult = require('../utils/checkResult');
@@ -101,7 +101,7 @@ exports.createVacation = catchAsync(async (req, res, next) => {
     employeeId: employeeObjectId,
     startVacation: startVacationUtc,
     endVacation: endVacationUtc,
-    duration,
+    duration: new Double(duration),
     type,
     created_at: timeNow,
   });
@@ -146,7 +146,7 @@ exports.updateVacation = catchAsync(async (req, res, next) => {
     $set: {
       startVacation: new Date(startVacation),
       endVacation: new Date(endVacation),
-      duration,
+      duration: new Double(duration),
       type,
       employeeId: employeeObjectId,
       created_at: timeNow,

@@ -15,13 +15,16 @@ module.exports = class Email {
 
   #hostname;
 
-  constructor(user, url, from = 'no-reply@snti.pl') {
+  #body;
+
+  constructor(user, url, from = 'no-reply@snti.pl', body = '') {
     this.#to = user.email;
     this.#url = url;
     this.#surname = user.surname;
     this.#name = user.name;
     this.#from = `SNTI <${from}>`;
     this.#hostname = 'urlop.snti.pl';
+    this.#body = body;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -37,13 +40,14 @@ module.exports = class Email {
     });
   }
 
-  async #send(template, subject) {
+  async #send(template, subject, to = this.#to) {
     const html = pug.renderFile(
       `${__dirname}/emailTemplates/${template}.pug`,
       {
         name: this.#name,
         surname: this.#surname,
         subject,
+        body: this.#body,
         url: this.#url,
         hostname: this.#hostname,
       },
@@ -53,7 +57,7 @@ module.exports = class Email {
 
     const mailOptions = {
       from: this.#from,
-      to: this.#to,
+      to,
       subject,
       text,
       html,
@@ -73,5 +77,12 @@ module.exports = class Email {
 
   async sendRejestration() {
     await this.#send('registration', 'Rejestracja SNTI');
+  }
+
+  async sendProposalCreation() {
+    const userMail = this.#send('proposalCreatingUser', 'Złożenie wniosku urlopowego');
+    const adminMail = this.#send('proposalCreatingAdmin', 'Złożenie wniosku urlopowego', 'lysakova@yahoo.com');
+    const adminMail2 = this.#send('proposalCreatingAdmin', 'Złożenie wniosku urlopowego', 'lysakov555@gmail.com');
+    await Promise.all([userMail, adminMail, adminMail2]);
   }
 };
