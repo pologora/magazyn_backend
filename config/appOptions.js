@@ -1,6 +1,3 @@
-// const origin = process.env.NODE_ENV === 'development' ? process.env.CORS_ORIGIN_DEV :
-// process.env.CORS_ORIGIN_PROD;
-
 exports.corsOptions = {
   origin: [
     'http://localhost:5173',
