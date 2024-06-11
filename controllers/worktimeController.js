@@ -135,13 +135,15 @@ exports.deleteWorkTime = catchAsync(async (req, res, next) => {
 
   checkResult(result, 'user');
 
+  let updateResult;
   if (!workTimeDocument.endWork) {
     const employeeId = new ObjectId(workTimeDocument.employeeId);
-    await employeeCollection.findOneAndUpdate({ _id: employeeId }, { $set: { isWorking: false } });
+    updateResult = await employeeCollection.findOneAndUpdate({ _id: employeeId }, { $set: { isWorking: false } });
   }
 
   res.status(200).json({
     status: 'success',
     data: result,
+    updateResult,
   });
 });
