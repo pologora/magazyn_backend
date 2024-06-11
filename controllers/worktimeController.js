@@ -32,13 +32,15 @@ exports.getAllWorkTime = catchAsync(async (req, res, next) => {
     end.setUTCHours(23, 59, 59, 999);
   }
 
-  const workdays = await workTimeCollection.find({
-    employeeId,
-    startWork: {
-      $gte: new Date(start),
-      $lte: new Date(end),
-    },
-  }).toArray();
+  const workdays = await workTimeCollection
+    .find({
+      employeeId,
+      startWork: {
+        $gte: new Date(start),
+        $lte: new Date(end),
+      },
+    })
+    .toArray();
 
   checkResult(workdays, 'workdays', 'get', 'id');
 
@@ -74,7 +76,7 @@ exports.getWorkTime = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const userObjectId = new ObjectId(id);
   const query = { _id: userObjectId };
-  const options = { };
+  const options = {};
 
   const result = await workTimeCollection.findOne(query, options);
 
@@ -98,8 +100,7 @@ exports.updateWorkTime = catchAsync(async (req, res, next) => {
 
   if (!workTimeCollection.endWork) {
     const employeeId = new ObjectId(workTimeDocument.employeeId);
-    const result = await
-    employeeCollection.findOneAndUpdate({ _id: employeeId }, { $set: { isWorking: false } });
+    const result = await employeeCollection.findOneAndUpdate({ _id: employeeId }, { $set: { isWorking: false } });
     checkResult(result, 'employee', 'patch', 'ID');
   }
 
@@ -128,9 +129,16 @@ exports.deleteWorkTime = catchAsync(async (req, res, next) => {
   const userObjectId = new ObjectId(id);
   const query = { _id: userObjectId };
 
+  const workTimeDocument = await workTimeCollection.findOne(query);
+
   const result = await workTimeCollection.findOneAndDelete(query);
 
   checkResult(result, 'user');
+
+  if (!workTimeDocument.endWork) {
+    const employeeId = new ObjectId(workTimeDocument.employeeId);
+    await employeeCollection.findOneAndUpdate({ _id: employeeId }, { $set: { isWorking: false } });
+  }
 
   res.status(200).json({
     status: 'success',
